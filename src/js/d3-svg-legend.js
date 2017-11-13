@@ -2,6 +2,7 @@ d3.svg.legend = function() {
 
     var legendValues=[{color: "red", stop: [0,1]},{color: "blue", stop: [1,2]},{color: "purple", stop: [2,3]},{color: "yellow", stop: [3,4]},{color: "Aquamarine", stop: [4,5]}];
     var legendScale;
+    var scale;
     var cellWidth = 30;
     var cellHeight = 20;
     var adjustable = false;
@@ -13,15 +14,16 @@ d3.svg.legend = function() {
     var orientation = "horizontal";
     var cellPadding = 0;
     var labelClass = function() { return ""; };
+    var incClass;
     var onClick = undefined;
 
 
     function legend(svg) {
 
-        updateBGSize = function(legend){
+        var updateBGSize = function(legend){
 
             var margin = 10;
-            dim = legend.target.node().getBBox();
+            var dim = legend.target.node().getBBox();
             dim.height += margin * 2;
             dim.width += margin * 2;
             dim.y -= margin;
@@ -35,7 +37,7 @@ d3.svg.legend = function() {
                 .attr('stroke-width', 2);
         };
 
-        drag = d3.behavior.drag()
+        var drag = d3.behavior.drag()
             .on("drag", function(d,i) {
                 d.x += d3.event.dx;
                 d.y += d3.event.dy;
@@ -113,7 +115,6 @@ d3.svg.legend = function() {
             legend.initDone = true;
         }
 
-
         // remove previously painted rect and text
         legend.target.selectAll("g.legendCells").select("text.breakLabels").remove();
         legend.target.selectAll("g.legendCells").select("rect").remove();
@@ -154,7 +155,7 @@ d3.svg.legend = function() {
     }
 
     legend.initDone = false;
-    legend.target;
+    //legend.target;
 
     legend.inputScale = function(newScale) {
         if (!arguments.length) return scale;

@@ -34,7 +34,7 @@ body .muts-needle-plot {
     opacity: 0;
 }
 
-.muts-needle-plot .d3-tip {
+.muts-needle-plot.d3-tip {
     line-height: 1;
     font-size: 11px;
     color: black;
@@ -46,13 +46,13 @@ body .muts-needle-plot {
     border-radius: 6px;
 }
 
-.muts-needle-plot .d3-tip-selection {
+.muts-needle-plot.d3-tip-selection {
     font-size: 12px;
     text-align: center;
 }
 
 /* Creates a small triangle extender for the tooltip */
-.muts-needle-plot .d3-tip:after {
+.muts-needle-plot.d3-tip:after {
     box-sizing: border-box;
     display: inline;
     font-size: 10px;
@@ -65,7 +65,7 @@ body .muts-needle-plot {
 }
 
 /* Style northward tooltips differently */
-.muts-needle-plot .d3-tip.n:after {
+.muts-needle-plot.d3-tip.n:after {
     margin: -1px 0 0 0;
     top: 100%;
     left: 0;

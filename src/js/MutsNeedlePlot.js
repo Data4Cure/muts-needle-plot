@@ -68,14 +68,14 @@ function MutsNeedlePlot (config) {
 
 
     this.tip = d3.tip()
-      .attr('class', 'd3-tip d3-tip-needle')
+      .attr('class', 'muts-needle-plot d3-tip d3-tip-needle')
       .offset([-10, 0])
       .html(function(d) {
         return "<span>" + d.value + " " + d.category +  " at coord. " + d.coordString + "</span>";
       });
 
     this.selectionTip = d3.tip()
-        .attr('class', 'd3-tip d3-tip-selection')
+        .attr('class', 'muts-needle-plot d3-tip d3-tip-selection')
         .offset([-50, 0])
         .html(function(d) {
             return "<span> Selected coordinates<br/>" + Math.round(d.left) + " - " + Math.round(d.right) + "</span>";

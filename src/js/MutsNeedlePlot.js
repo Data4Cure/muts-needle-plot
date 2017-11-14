@@ -66,20 +66,25 @@ function MutsNeedlePlot (config) {
     var d3tip = require('d3-tip');
     d3tip(d3);
 
+    var needleTip = config.needleTip ||
+        function(d) {
+            return "<span>" + d.value + " " + d.category +  " at coord. " + d.coordString + "</span>";
+        }
+
+    var selectionTip = config.selectionTip ||
+        function(d) {
+            return "<span> Selected coordinates<br/>" + Math.round(d.left) + " - " + Math.round(d.right) + "</span>";
+        }
 
     this.tip = d3.tip()
       .attr('class', 'muts-needle-plot d3-tip d3-tip-needle')
       .offset([-10, 0])
-      .html(function(d) {
-        return "<span>" + d.value + " " + d.category +  " at coord. " + d.coordString + "</span>";
-      });
+      .html(needleTip);
 
     this.selectionTip = d3.tip()
         .attr('class', 'muts-needle-plot d3-tip d3-tip-selection')
         .offset([-50, 0])
-        .html(function(d) {
-            return "<span> Selected coordinates<br/>" + Math.round(d.left) + " - " + Math.round(d.right) + "</span>";
-        })
+        .html(selectionTip)
         .direction('n');
 
     // INIT SVG
@@ -642,7 +647,8 @@ MutsNeedlePlot.prototype.drawNeedles = function(svg, mutationData, regionData) {
                 coord: numericCoord,
                 value: numericValue,
                 stickHeight: stickHeight,
-                color: self.colorScale(category)
+                color: self.colorScale(category),
+                data: d.data,
             }
         } else {
             console.debug("discarding " + d.coord + " " + d.category + "("+ numericCoord +")");

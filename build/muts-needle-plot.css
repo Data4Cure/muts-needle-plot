@@ -1,40 +1,40 @@
-body {
+body .muts-needle-plot {
     font-family: Verdana,Geneva,sans-serif;
 }
 
 
 /* brush selection */
-.selected {
+.muts-needle-plot .selected {
     fill: lightblue;
     stroke-width: 4;
 }
 
 /* figure legend */
-.breakLabels.nomuts {
+.muts-needle-plot .breakLabels.nomuts {
     font-weight: normal;
     opacity: 0.3;
 }
 
-.noshow {
+.muts-needle-plot .noshow {
     opacity: 0.1;
 }
 
-.regionGroup:hover > text {
+.muts-needle-plot .regionGroup:hover > text {
     fill: black;
     font-weight: bold;
     opacity: 1;
 }
 
-.regionGroup:hover > rect {
+.muts-needle-plot .regionGroup:hover > rect {
     stroke-width: 4;
 }
 
-.repeatedName.noshow {
+.muts-needle-plot .repeatedName.noshow {
     fill: black;
     opacity: 0;
 }
 
-.d3-tip {
+.muts-needle-plot .d3-tip {
     line-height: 1;
     font-size: 11px;
     color: black;
@@ -46,13 +46,13 @@ body {
     border-radius: 6px;
 }
 
-.d3-tip-selection {
+.muts-needle-plot .d3-tip-selection {
     font-size: 12px;
     text-align: center;
 }
 
 /* Creates a small triangle extender for the tooltip */
-.d3-tip:after {
+.muts-needle-plot .d3-tip:after {
     box-sizing: border-box;
     display: inline;
     font-size: 10px;
@@ -65,7 +65,7 @@ body {
 }
 
 /* Style northward tooltips differently */
-.d3-tip.n:after {
+.muts-needle-plot .d3-tip.n:after {
     margin: -1px 0 0 0;
     top: 100%;
     left: 0;

@@ -115,10 +115,21 @@ function MutsNeedlePlot (config) {
 
     // DEFINE SCALES
 
-    var x = d3.scale.linear()
-      .domain([this.minCoord, this.maxCoord])
-      .range([buffer * 1.5 , width - buffer])
-      .nice();
+    var x
+    if (config.segments) {
+        x = segmentedDomain(config.segments,
+                            0.1,
+                            buffer,
+                            width);
+    }
+    else {
+        x = d3.scale.linear()
+            .domain([this.minCoord, this.maxCoord])
+            .range([buffer * 1.5 , width - buffer])
+            .nice();
+    }
+
+
     this.x = x;
 
     var y = d3.scale.linear()
@@ -223,6 +234,64 @@ function MutsNeedlePlot (config) {
         }
     });
 
+}
+
+//segmentedDomain([ { minCoord: 1000, maxCoord: 1010 } ], 0, 100, 1000)
+//segmentedDomain([ { minCoord: 1000, maxCoord: 1010 }, { minCoord: 2000, maxCoord: 2050 }, { minCoord: 60000, maxCoord: 60030 } ], 0, 100, 1000)
+//segmentedDomain([ { minCoord: 1000, maxCoord: 1010 } ], 0.1, 100, 1000)
+//segmentedDomain([ { minCoord: 1000, maxCoord: 1010 }, { minCoord: 2000, maxCoord: 2050 }, { minCoord: 60000, maxCoord: 60030 } ], 0.1, 100, 1000)
+function segmentedDomain(segments, padding, buffer, width) {
+    // padding - fraction of the domain used as segment separators
+    if (segments.length <= 1) {
+        padding = 0
+    }
+    var lens = _.map(
+        segments,
+        function(s) {
+            return s.maxCoord - s.minCoord + 1
+        }
+    )
+    var cumm_lens = _.reduce(
+        lens,
+        function(m, l) {
+            m.push(m[m.length - 1] + l)
+            return m
+        },
+        [0]
+    )
+    var vs = _.map(
+        cumm_lens,
+        function(l) {
+            return l * (1 - padding) / cumm_lens[cumm_lens.length - 1]
+        }
+    )
+    var sep = padding / (segments.length - 1)
+    var domain = []
+    var ws = []
+    vs.forEach(function(v, k) {
+        if (k !== 0) {
+            domain.push(segments[k - 1].minCoord)
+            domain.push(segments[k - 1].maxCoord)
+            ws.push((k - 1) * sep + vs[k - 1])
+            ws.push((k - 1) * sep + v)
+        }
+    })
+    var f = d3.scale.linear()
+        .range([buffer * 1.5 , width - buffer])
+    var range = _.map(ws, f)
+    // console.log('segmentedDomain', {
+    //     lens: lens,
+    //     cumm_lens: cumm_lens,
+    //     vs: vs,
+    //     sep: sep,
+    //     domain: domain,
+    //     ws: ws,
+    //     range: range,
+    // })
+    return d3.scale.linear()
+        .domain(domain)
+        .range(range)
+        .nice()
 }
 
 MutsNeedlePlot.prototype.drawLegend = function(svg) {

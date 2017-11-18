@@ -16,7 +16,7 @@ body .muts-needle-plot {
 }
 
 .muts-needle-plot .noshow {
-    opacity: 0.1;
+    opacity: 0.1 !important;
 }
 
 .muts-needle-plot .regionGroup:hover > text {

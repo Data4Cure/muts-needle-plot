@@ -640,7 +640,7 @@ MutsNeedlePlot.prototype.drawAxes = function(svg) {
                 }
             )
         )
-        console.log('tickValues', xAxis, this)
+        //console.log('tickValues', xAxis, this)
     }
 
     svg.append("svg:g")

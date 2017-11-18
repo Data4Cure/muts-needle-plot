@@ -76,6 +76,12 @@ function MutsNeedlePlot (config) {
             return "<span> Selected coordinates<br/>" + Math.round(d.left) + " - " + Math.round(d.right) + "</span>";
         }
 
+    var regionTip = config.regionTip ||
+        function(d) {
+            return "<span>" + d.name + "</span>";
+        }
+
+
     this.tip = d3.tip()
       .attr('class', 'muts-needle-plot d3-tip d3-tip-needle')
       .offset([-10, 0])
@@ -85,6 +91,12 @@ function MutsNeedlePlot (config) {
         .attr('class', 'muts-needle-plot d3-tip d3-tip-selection')
         .offset([-50, 0])
         .html(selectionTip)
+        .direction('n');
+
+    this.regionTip = d3.tip()
+        .attr('class', 'muts-needle-plot d3-tip d3-tip-region')
+        .offset([-10, 0])
+        .html(regionTip)
         .direction('n');
 
     // INIT SVG
@@ -112,8 +124,11 @@ function MutsNeedlePlot (config) {
 
     svg.call(this.tip);
     svg.call(this.selectionTip);
+    svg.call(this.regionTip);
 
     // DEFINE SCALES
+
+    this.segments = config.segments
 
     var x
     if (config.segments) {
@@ -203,7 +218,7 @@ function MutsNeedlePlot (config) {
     }
 
     /// DRAW
-    this.drawNeedles(svg, mutationData, regionData);
+    this.drawNeedles(svg, mutationData, regionData, config.noRegionLabels);
 
 
     self.on("needleSelectionChange", function (edata) {
@@ -291,7 +306,7 @@ function segmentedDomain(segments, padding, buffer, width) {
     return d3.scale.linear()
         .domain(domain)
         .range(range)
-        .nice()
+        //.nice()
 }
 
 MutsNeedlePlot.prototype.drawLegend = function(svg) {
@@ -373,7 +388,7 @@ MutsNeedlePlot.prototype.drawLegend = function(svg) {
 
 };
 
-MutsNeedlePlot.prototype.drawRegions = function(svg, regionData) {
+MutsNeedlePlot.prototype.drawRegions = function(svg, regionData, noRegionLabels) {
 
     var maxCoord = this.maxCoord;
     var minCoord = this.minCoord;
@@ -384,6 +399,7 @@ MutsNeedlePlot.prototype.drawRegions = function(svg, regionData) {
 
     var below = true;
 
+    var regionTip = this.regionTip;
 
     getRegionStart = function(region) {
         return parseInt(region.split("-")[0])
@@ -442,7 +458,9 @@ MutsNeedlePlot.prototype.drawRegions = function(svg, regionData) {
             })
             .style("stroke", function (data) {
                 return d3.rgb(data.color).darker()
-            });
+            })
+            .on('mouseover',  function(d){ d3.select(this).moveToFront(); regionTip.show(d); })
+            .on('mouseout', regionTip.hide);
 
         regions
             .attr('pointer-events', 'all')
@@ -459,106 +477,108 @@ MutsNeedlePlot.prototype.drawRegions = function(svg, regionData) {
 
         });
 
-        // Place and label location
-        var labels = [];
+        if (!noRegionLabels) {
+            // Place and label location
+            var labels = [];
 
-        var repeatedRegion = {};
-        var getRegionClass = function(region) {
-            var c = "regionName";
-            var repeatedClass = "RR_"+region.name;
-            if(_.has(repeatedRegion, region.name)) {
-                c = "repeatedName noshow " + repeatedClass;
-            }
-            repeatedRegion[region.name] = repeatedClass;
-            return c;
-        };
-        regions.append("text")
-            .attr("class", getRegionClass)
-            .attr("text-anchor", "middle")
-            .attr("fill", "black")
-            .attr("opacity", 0.5)
-            .attr("x", function (r) {
-                r.x = x(r.start) + (x(r.end) - x(r.start)) / 2;
-                return r.x;
-            })
-            .attr("y", function(r) {r.y = y(0) + text_offset; return r.y; } )
-            .attr("dy", "0.35em")
-            .style("font-size", "12px")
-            .style("text-decoration", "bold")
-            .text(function (data) {
-                return data.name
+            var repeatedRegion = {};
+            var getRegionClass = function(region) {
+                var c = "regionName";
+                var repeatedClass = "RR_"+region.name;
+                if(_.has(repeatedRegion, region.name)) {
+                    c = "repeatedName noshow " + repeatedClass;
+                }
+                repeatedRegion[region.name] = repeatedClass;
+                return c;
+            };
+            regions.append("text")
+                .attr("class", getRegionClass)
+                .attr("text-anchor", "middle")
+                .attr("fill", "black")
+                .attr("opacity", 0.5)
+                .attr("x", function (r) {
+                    r.x = x(r.start) + (x(r.end) - x(r.start)) / 2;
+                    return r.x;
+                })
+                .attr("y", function(r) {r.y = y(0) + text_offset; return r.y; } )
+                .attr("dy", "0.35em")
+                .style("font-size", "12px")
+                .style("text-decoration", "bold")
+                .text(function (data) {
+                    return data.name
+                });
+
+            var regionNames = svg.selectAll(".regionName"); // d3.selectAll(".regionName");
+            regionNames.each(function(d, i) {
+                var interactionLength = this.getBBox().width / 2;
+                labels.push({x: d.x, y: d.y, label: d.name, weight: d.name.length, radius: interactionLength});
             });
 
-        var regionNames = svg.selectAll(".regionName"); // d3.selectAll(".regionName");
-        regionNames.each(function(d, i) {
-            var interactionLength = this.getBBox().width / 2;
-            labels.push({x: d.x, y: d.y, label: d.name, weight: d.name.length, radius: interactionLength});
-        });
+            var force = d3.layout.force()
+                .chargeDistance(5)
+                .nodes(labels)
+                .charge(-10)
+                .gravity(0);
 
-        var force = d3.layout.force()
-            .chargeDistance(5)
-            .nodes(labels)
-            .charge(-10)
-            .gravity(0);
-
-        var minX = x(minCoord);
-        var maxX = x(maxCoord);
-        var withinBounds = function(x) {
-            return d3.min([
-                d3.max([
-                    minX,
-                    x]),
-                maxX
-            ]);
-        };
-        function collide(node) {
-            var r = node.radius + 3,
-                nx1 = node.x - r,
-                nx2 = node.x + r,
-                ny1 = node.y - r,
-                ny2 = node.y + r;
-            return function(quad, x1, y1, x2, y2) {
-                if (quad.point && (quad.point !== node)) {
-                    var l = node.x - quad.point.x,
-                        x = l;
-                    r = node.radius + quad.point.radius;
-                    if (Math.abs(l) < r) {
-                        l = (l - r) / l * .005;
-                        x *= l;
-                        x =  (node.x > quad.point.x && x < 0) ? -x : x;
-                        node.x += x;
-                        quad.point.x -= x;
-                    }
-                }
-                return x1 > nx2
-                    || x2 < nx1
-                    || y1 > ny2
-                    || y2 < ny1;
+            var minX = x(minCoord);
+            var maxX = x(maxCoord);
+            var withinBounds = function(x) {
+                return d3.min([
+                    d3.max([
+                        minX,
+                        x]),
+                    maxX
+                ]);
             };
-        }
-        var moveRepeatedLabels = function(label, x) {
-            var name = repeatedRegion[label];
-            svg.selectAll("text."+name)
-                .attr("x", newx);
-        };
-        force.on("tick", function(e) {
-            var q = d3.geom.quadtree(labels),
-                i = 0,
-                n = labels.length;
-            while (++i < n) {
-                q.visit(collide(labels[i]));
+            function collide(node) {
+                var r = node.radius + 3,
+                    nx1 = node.x - r,
+                    nx2 = node.x + r,
+                    ny1 = node.y - r,
+                    ny2 = node.y + r;
+                return function(quad, x1, y1, x2, y2) {
+                    if (quad.point && (quad.point !== node)) {
+                        var l = node.x - quad.point.x,
+                            x = l;
+                        r = node.radius + quad.point.radius;
+                        if (Math.abs(l) < r) {
+                            l = (l - r) / l * .005;
+                            x *= l;
+                            x =  (node.x > quad.point.x && x < 0) ? -x : x;
+                            node.x += x;
+                            quad.point.x -= x;
+                        }
+                    }
+                    return x1 > nx2
+                        || x2 < nx1
+                        || y1 > ny2
+                        || y2 < ny1;
+                };
             }
-            // Update the position of the text element
-            var i = 0;
-            svg.selectAll("text.regionName")
-                .attr("x", function(d) {
-                    newx = labels[i++].x;
-                    moveRepeatedLabels(d.name, newx);
-                    return newx;
+            var moveRepeatedLabels = function(label, x) {
+                var name = repeatedRegion[label];
+                svg.selectAll("text."+name)
+                    .attr("x", newx);
+            };
+            force.on("tick", function(e) {
+                var q = d3.geom.quadtree(labels),
+                    i = 0,
+                    n = labels.length;
+                while (++i < n) {
+                    q.visit(collide(labels[i]));
                 }
-            );
-        });
-        force.start();
+                // Update the position of the text element
+                var i = 0;
+                svg.selectAll("text.regionName")
+                    .attr("x", function(d) {
+                        newx = labels[i++].x;
+                        moveRepeatedLabels(d.name, newx);
+                        return newx;
+                    }
+                         );
+            });
+            force.start();
+        }
     }
 
     function formatRegions(regions) {
@@ -603,6 +623,26 @@ MutsNeedlePlot.prototype.drawAxes = function(svg) {
 
     xAxis = d3.svg.axis().scale(x).orient("bottom");
 
+    if (this.segments) {
+        xAxis.tickValues(
+            _.map(
+                d3.scale.linear().domain([
+                    x(this.minCoord),
+                    x(this.maxCoord),
+                ]).ticks(),
+                // _.range(
+                //     x(this.minCoord),
+                //     x(this.maxCoord),
+                //     (x(this.maxCoord) - x(this.minCoord)) / 8
+                // ),
+                function(v) {
+                    return Math.round(x.invert(v))
+                }
+            )
+        )
+        console.log('tickValues', xAxis, this)
+    }
+
     svg.append("svg:g")
       .attr("class", "x-axis axis")
       .attr("transform", "translate(0," + (this.height - this.buffer) + ")")
@@ -643,7 +683,7 @@ MutsNeedlePlot.prototype.drawAxes = function(svg) {
 
 
 
-MutsNeedlePlot.prototype.drawNeedles = function(svg, mutationData, regionData) {
+MutsNeedlePlot.prototype.drawNeedles = function(svg, mutationData, regionData, noRegionLabels) {
 
     var y = this.y;
     var x = this.x;
@@ -791,7 +831,7 @@ MutsNeedlePlot.prototype.drawNeedles = function(svg, mutationData, regionData) {
 
         // adjust y-scale according to highest value an draw the rest
         if (regionData != undefined) {
-            self.drawRegions(svg, regionData);
+            self.drawRegions(svg, regionData, noRegionLabels);
         }
         self.drawLegend(svg);
         self.drawAxes(svg);

@@ -280,7 +280,7 @@ function segmentedDomain(segments, padding, buffer, width) {
             return l * (1 - padding) / cumm_lens[cumm_lens.length - 1]
         }
     )
-    var sep = padding / (segments.length - 1)
+    var sep = (padding / (segments.length - 1)) || 0
     var domain = []
     var ws = []
     vs.forEach(function(v, k) {

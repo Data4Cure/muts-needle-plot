@@ -629,7 +629,7 @@ MutsNeedlePlot.prototype.drawAxes = function(svg) {
                 d3.scale.linear().domain([
                     x(this.minCoord),
                     x(this.maxCoord),
-                ]).ticks(),
+                ]).ticks(6),
                 // _.range(
                 //     x(this.minCoord),
                 //     x(this.maxCoord),
